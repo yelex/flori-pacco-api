@@ -25,8 +25,10 @@ const orderSchema = new mongoose.Schema({
     },
 
     orderStatus: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'orderStatus',
+        type: String,
+        required: true,
+        minlength: 2,
+        maxlength: 20,
     },
 
     isDelivery: {
