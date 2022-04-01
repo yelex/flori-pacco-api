@@ -9,7 +9,7 @@ const UnauthorizedError = require('../errors/unauthorized'); // 401
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
-module.exports.getUsers = (req, res, next) => {
+module.exports.getUsers = (_, res, next) => {
   User.find({})
     .then((users) => res.send(users.map((user) => {
       const {
@@ -53,37 +53,6 @@ module.exports.getUser = (req, res, next) => {
     });
 };
 
-
-module.exports.updateUserProfile = (req, res, next) => {
-  const { name, email } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { name, email }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        throw Error('404');
-      }
-      const {
-        _id, name, email
-      } = user;
-      res.send({
-        name, email, _id,
-      });
-    })
-    .catch((err) => {
-      if (err.message === '404') {
-        next(new NotFoundError('Пользователь не найден'));
-        return;
-      }
-
-      if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
-        return;
-      }
-
-      next(new InternalError('На сервере произошла ошибка'));
-    });
-};
-
 module.exports.createUser = (req, res, next) => {
   const {
     name, email, password,
@@ -119,9 +88,12 @@ module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
+    // если после findUserByCredentials перешли в then, 
+    // значит пароль верный
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret');
-
+      // создает токен с payload, в который записывается информация о _id
+      const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret'); 
+    
       res
         .cookie('jwt', token, {
           httpOnly: true,

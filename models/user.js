@@ -13,12 +13,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    dropDups: true,
     validate: {
       validator(v) {
         return validator.isEmail(v);
       },
-      message: 'Invalid email',
+      message: 'Неверный email',
     },
   },
   password: {
@@ -29,13 +28,13 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
-  return this.findOne({ email }).select('+password')
+  return this.findOne({ email }).select('+password') // добавляется password в результатах поиска
     .then((user) => {
       if (!user) {
         return Promise.reject(new Error('Вы ввели неправильный логин или пароль.'));
       }
 
-      return bcrypt.compare(password, user.password)
+      return bcrypt.compare(password, user.password) // сравнение расшифрованных паролей
         .then((matched) => {
           if (!matched) {
             return Promise.reject(new Error('Вы ввели неправильный логин или пароль.'));
